@@ -193,7 +193,7 @@ Weibo.prototype.request = function (method, apiname, params, callback) {
            , path:    path.join(options.api_pathname, apiname)
            , headers: {}
   }
-  
+
   // 发送请求，如果为POST或PUT，则需要设置相应的headers
   if (method == 'POST' || method == 'PUT') {
     var data = querystring.stringify(params);
@@ -215,6 +215,16 @@ Weibo.prototype.request = function (method, apiname, params, callback) {
  * @param {function} callback 回调函数
  */
 Weibo.prototype.sendRequest = function (options, data, callback) {
+  // windows上path自动用反斜杠合成路径，但是http协议需要斜杠
+  // 所以这里需要做个翻译。而且access_token不是目录，所以不能是
+  // 斜杠结尾
+  if (options.path && path.sep=='\\') {
+    var path_arr=options.path.split(path.sep);
+    if (path_arr[0]==path_arr[1]) path_arr=path_arr.slice(1);
+    if (path_arr[path_arr.length-1]=='') path_arr.pop();
+    options.path=path_arr.join('/');
+  }
+
   var req = https.request(options, function (res) {
     var length = parseInt(res.headers['content-length']);
     var resdata = new Buffer(length);
@@ -321,3 +331,4 @@ User.prototype.api = function (method, apiname, params) {
 // 模块输出
 exports.Weibo = Weibo;
 exports.User = User;
+
